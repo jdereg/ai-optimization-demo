@@ -1,0 +1,9 @@
+# Git ignores
+target/
+*.class
+*.jar
+*.jfr
+.idea/
+*.iml
+.DS_Store
+

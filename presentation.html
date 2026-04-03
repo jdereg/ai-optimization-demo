@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-Assisted Iterative Optimization Loops</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=DM+Sans:wght@400;500;600;700;800&family=DM+Serif+Display&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #0a0e17; --surface: #111827; --surface-2: #1a2236;
+  --border: #1e2d4a; --border-bright: #2a3f6b;
+  --text: #e2e8f0; --text-dim: #7a8ba8; --text-muted: #4a5b78;
+  --accent-blue: #3b82f6; --accent-blue-glow: rgba(59,130,246,0.15);
+  --accent-cyan: #22d3ee; --accent-cyan-glow: rgba(34,211,238,0.15);
+  --accent-orange: #f97316; --accent-orange-glow: rgba(249,115,22,0.15);
+  --accent-green: #34d399; --accent-green-glow: rgba(52,211,153,0.25);
+  --accent-red: #f87171; --accent-red-glow: rgba(248,113,113,0.15);
+  --accent-purple: #a78bfa; --accent-purple-glow: rgba(167,139,250,0.15);
+  --font-mono: 'JetBrains Mono','Fira Code',monospace;
+  --font-body: 'DM Sans',-apple-system,sans-serif;
+  --font-display: 'DM Serif Display',Georgia,serif;
+}
+html, body { height: 100%; }
+body { font-family: var(--font-body); background: var(--bg); color: var(--text); overflow-x: hidden; }
+body::before { content:''; position:fixed; inset:0; background-image: linear-gradient(rgba(30,45,74,0.3) 1px,transparent 1px), linear-gradient(90deg,rgba(30,45,74,0.3) 1px,transparent 1px); background-size:60px 60px; pointer-events:none; z-index:0; }
+#app { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; }
+
+.header { padding:20px 40px 0; display:flex; align-items:center; justify-content:space-between; flex-shrink:0; }
+.header-left { display:flex; align-items:center; gap:20px; }
+.logo-mark { width:44px; height:44px; border-radius:10px; background:linear-gradient(135deg,var(--accent-blue),var(--accent-cyan)); display:flex; align-items:center; justify-content:center; font-family:var(--font-mono); font-weight:700; font-size:18px; color:var(--bg); box-shadow:0 0 30px rgba(34,211,238,0.2),0 0 60px rgba(59,130,246,0.1); }
+.header-title { font-family:var(--font-display); font-size:24px; color:var(--text); }
+.header-title span { color:var(--text-dim); font-weight:400; }
+
+.slide-view { flex:1; display:flex; flex-direction:column; min-height:0; padding-top:16px; }
+.slide-canvas { flex:1; display:flex; align-items:center; justify-content:center; padding:clamp(20px,4vh,60px) clamp(32px,6vw,120px); min-height:0; overflow:auto; }
+.slide { width:100%; max-width:90vw; min-height:400px; display:flex; flex-direction:column; justify-content:center; }
+.slide-eyebrow { font-family:var(--font-mono); font-size:clamp(11px,1vw,16px); font-weight:600; text-transform:uppercase; letter-spacing:2px; color:var(--accent-cyan); margin-bottom:clamp(12px,1.5vw,24px); }
+.slide-headline { font-family:var(--font-display); font-size:clamp(28px,3.6vw,72px); line-height:1.15; letter-spacing:-1px; color:var(--text); margin-bottom:clamp(18px,2.5vw,40px); }
+.slide-headline em { font-style:normal; color:var(--accent-cyan); }
+.slide-headline .accent-orange { color:var(--accent-orange); }
+.slide-headline .accent-green { color:var(--accent-green); }
+.slide-headline .accent-blue { color:var(--accent-blue); }
+.slide-headline .accent-red { color:var(--accent-red); }
+.slide-headline .accent-purple { color:var(--accent-purple); }
+.slide-body { display:flex; flex-direction:column; gap:clamp(10px,1.2vw,20px); }
+.slide-point { font-size:clamp(15px,1.6vw,28px); line-height:1.5; color:var(--text-dim); padding-left:clamp(16px,1.8vw,30px); position:relative; }
+.slide-point::before { content:'\203A'; position:absolute; left:0; color:var(--accent-cyan); font-weight:700; font-size:clamp(16px,1.8vw,30px); }
+.slide-point strong { color:var(--text); font-weight:600; }
+.slide-point code { font-family:var(--font-mono); font-size:clamp(13px,1.3vw,22px); background:var(--surface-2); padding:2px 8px; border-radius:4px; color:var(--accent-cyan); border:1px solid var(--border); }
+.slide-sub { font-size:clamp(13px,1.2vw,20px); color:var(--text-muted); margin-top:clamp(12px,1.5vw,24px); font-style:italic; }
+
+.slide-code-block { background:var(--surface); border:1px solid var(--border-bright); border-radius:10px; padding:clamp(14px,2vw,32px) clamp(16px,2.2vw,36px); margin-top:8px; overflow-x:auto; }
+.slide-code-block pre { font-family:var(--font-mono); font-size:clamp(12px,1.1vw,20px); line-height:1.6; color:var(--text); margin:0; white-space:pre; }
+.slide-code-block .comment { color:var(--text-muted); }
+.slide-code-block .keyword { color:var(--accent-orange); }
+.slide-code-block .string { color:var(--accent-green); }
+.slide-code-block .method { color:var(--accent-cyan); }
+.slide-code-block .number { color:var(--accent-purple); }
+
+.slide-stat-row { display:flex; gap:clamp(16px,2.5vw,40px); margin-top:12px; flex-wrap:wrap; }
+.slide-stat-box { flex:1; min-width:180px; background:var(--surface); border:1px solid var(--border-bright); border-radius:10px; padding:clamp(14px,2vw,32px); text-align:center; }
+.slide-stat-number { font-family:var(--font-mono); font-size:clamp(28px,3.2vw,56px); font-weight:700; letter-spacing:-2px; }
+.slide-stat-number.orange { color:var(--accent-orange); }
+.slide-stat-number.cyan { color:var(--accent-cyan); }
+.slide-stat-number.green { color:var(--accent-green); text-shadow:0 0 30px var(--accent-green-glow); }
+.slide-stat-number.blue { color:var(--accent-blue); }
+.slide-stat-number.purple { color:var(--accent-purple); }
+.slide-stat-desc { font-size:clamp(12px,1.1vw,18px); color:var(--text-dim); margin-top:6px; font-weight:500; }
+
+.slide-diagram { background:var(--surface); border:1px solid var(--border-bright); border-radius:12px; padding:clamp(20px,3vw,48px); margin-top:12px; }
+.loop-flow { display:flex; align-items:center; justify-content:center; gap:clamp(8px,1.2vw,20px); flex-wrap:wrap; }
+.loop-step { background:var(--surface-2); border:1px solid var(--border-bright); border-radius:8px; padding:clamp(10px,1.4vw,20px) clamp(14px,1.8vw,28px); font-family:var(--font-mono); font-size:clamp(12px,1.1vw,18px); color:var(--text); font-weight:600; text-align:center; white-space:nowrap; }
+.loop-step.highlight { border-color:var(--accent-cyan); color:var(--accent-cyan); background:rgba(34,211,238,0.05); }
+.loop-step.success { border-color:var(--accent-green); color:var(--accent-green); background:rgba(52,211,153,0.05); }
+.loop-step.fail { border-color:var(--accent-red); color:var(--accent-red); background:rgba(248,113,113,0.05); }
+.loop-step.terminal { border-color:var(--accent-orange); color:var(--accent-orange); background:rgba(249,115,22,0.05); }
+.loop-arrow { font-size:clamp(16px,1.8vw,28px); color:var(--text-muted); }
+.loop-branch { display:flex; flex-direction:column; align-items:center; gap:8px; }
+.loop-label { font-family:var(--font-mono); font-size:clamp(10px,0.9vw,14px); color:var(--text-muted); font-weight:600; text-transform:uppercase; letter-spacing:1px; }
+
+.slide-table { width:100%; border-collapse:collapse; margin-top:12px; }
+.slide-table th { font-family:var(--font-mono); font-size:clamp(11px,1vw,16px); font-weight:700; color:var(--accent-cyan); text-transform:uppercase; letter-spacing:1px; text-align:left; padding:clamp(8px,1vw,16px); border-bottom:2px solid var(--border-bright); }
+.slide-table td { font-family:var(--font-mono); font-size:clamp(12px,1.1vw,18px); padding:clamp(6px,0.8vw,14px) clamp(8px,1vw,16px); border-bottom:1px solid var(--border); color:var(--text-dim); }
+.slide-table tr:hover td { background:rgba(34,211,238,0.03); }
+.slide-table .val-green { color:var(--accent-green); font-weight:700; }
+.slide-table .val-cyan { color:var(--accent-cyan); font-weight:600; }
+
+.slide-nav { padding:14px 40px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--surface); flex-shrink:0; }
+.slide-counter { font-family:var(--font-mono); font-size:14px; color:var(--text-dim); font-weight:600; min-width:100px; }
+.slide-progress-track { flex:1; max-width:400px; height:3px; background:var(--border); border-radius:2px; margin:0 24px; overflow:hidden; }
+.slide-progress-fill { height:100%; background:var(--accent-cyan); border-radius:2px; transition:width 0.3s ease; }
+.slide-nav-buttons { display:flex; gap:8px; }
+.nav-btn { width:36px; height:36px; border:1px solid var(--border-bright); background:var(--surface); color:var(--text-dim); border-radius:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; font-size:16px; transition:all 0.15s; }
+.nav-btn:hover:not(:disabled) { border-color:var(--accent-cyan); color:var(--text); }
+.nav-btn:disabled { opacity:0.3; cursor:not-allowed; }
+
+.footer { padding:10px 40px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; background:var(--surface); flex-shrink:0; }
+.footer-text { font-size:12px; color:var(--text-muted); font-weight:500; }
+.footer-link { font-size:12px; color:var(--accent-cyan); text-decoration:none; font-weight:600; }
+
+.slide-list { list-style:none; padding:0; display:flex; flex-direction:column; gap:clamp(6px,0.8vw,14px); }
+.slide-list li { font-size:clamp(14px,1.4vw,24px); color:var(--text-dim); padding-left:clamp(20px,2vw,36px); position:relative; line-height:1.5; }
+.slide-list li::before { content:'\2022'; position:absolute; left:0; color:var(--accent-cyan); font-weight:700; font-size:clamp(16px,1.6vw,28px); line-height:1.3; }
+.slide-list li strong { color:var(--text); font-weight:600; }
+.slide-list li code { font-family:var(--font-mono); font-size:clamp(12px,1.2vw,20px); background:var(--surface-2); padding:2px 8px; border-radius:4px; color:var(--accent-cyan); border:1px solid var(--border); }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-mark">RL</div>
+      <div class="header-title">AI Optimization Loops <span>|</span> <span>Live Demo</span></div>
+    </div>
+  </div>
+
+  <div class="slide-view">
+    <div class="slide-canvas">
+
+      <!-- SLIDE 1: Title -->
+      <div class="slide" v-if="currentSlide===0">
+        <div class="slide-eyebrow">Developer Productivity</div>
+        <div class="slide-headline">AI-Assisted <em>Iterative Optimization</em> Loops</div>
+        <div class="slide-body">
+          <div class="slide-point">What happens when you give an AI a <strong>goal</strong>, a <strong>metric</strong>, and permission to <strong>loop</strong>?</div>
+          <div class="slide-point">Two live demos: <strong>code coverage</strong> and <strong>performance optimization</strong></div>
+          <div class="slide-point">Same codebase, different objectives, same pattern</div>
+        </div>
+        <div class="slide-sub">Claude Code &mdash; Anthropic's AI coding agent in the terminal</div>
+      </div>
+
+      <!-- SLIDE 2: The Old Way -->
+      <div class="slide" v-if="currentSlide===1">
+        <div class="slide-eyebrow">The Problem</div>
+        <div class="slide-headline">We write code. We <span class="accent-orange">manually</span> profile. We <span class="accent-orange">manually</span> optimize.</div>
+        <div class="slide-body">
+          <div class="slide-point">Developer spots a slowdown, fires up VisualVM, reads flame graphs</div>
+          <div class="slide-point">Writes a fix, re-benchmarks, checks if it helped</div>
+          <div class="slide-point">Repeat... until the <strong>sprint ends</strong> or <strong>patience runs out</strong></div>
+          <div class="slide-point">Same for test coverage: write tests, check JaCoCo report, write more tests</div>
+        </div>
+        <div class="slide-stat-row">
+          <div class="slide-stat-box">
+            <div class="slide-stat-number orange">80%</div>
+            <div class="slide-stat-desc">of optimization time is spent on measurement, not coding</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number orange">3-5</div>
+            <div class="slide-stat-desc">manual cycles before most developers move on</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: The Insight -->
+      <div class="slide" v-if="currentSlide===2">
+        <div class="slide-eyebrow">The Shift</div>
+        <div class="slide-headline">What if the AI could <em>run the tools</em>, <em>read the output</em>, and <em>decide what to do next</em>?</div>
+        <div class="slide-body">
+          <div class="slide-point">Claude Code can <strong>execute shell commands</strong>: <code>mvn</code>, <code>JaCoCo</code>, <code>JFR</code></div>
+          <div class="slide-point">It can <strong>read structured output</strong> and reason about what it means</div>
+          <div class="slide-point">It can <strong>modify code</strong> and re-run measurements automatically</div>
+          <div class="slide-point">The missing piece: a <strong>loop with a termination condition</strong></div>
+        </div>
+        <div class="slide-code-block">
+          <pre><span class="keyword">while</span> (<span class="method">goal_not_met</span>) {
+    <span class="method">measure</span>()       <span class="comment">// run the tool, capture metrics</span>
+    <span class="method">analyze</span>()       <span class="comment">// reason about what to improve</span>
+    <span class="method">apply_change</span>() <span class="comment">// modify code with best optimization</span>
+    <span class="method">re_measure</span>()    <span class="comment">// verify improvement</span>
+}</pre>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: Coverage Loop Concept -->
+      <div class="slide" v-if="currentSlide===3">
+        <div class="slide-eyebrow">Demo 1 &mdash; Test Coverage</div>
+        <div class="slide-headline">Measure coverage. Write tests. <em>Loop until 92%.</em></div>
+        <div class="slide-diagram">
+          <div class="loop-flow">
+            <div class="loop-step highlight">Run JaCoCo</div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-step">Parse Coverage %</div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-branch">
+              <div class="loop-step fail">&lt; 92%</div>
+              <div class="loop-arrow">&darr;</div>
+              <div class="loop-step">Find Gaps</div>
+              <div class="loop-arrow">&darr;</div>
+              <div class="loop-step">Write Tests</div>
+              <div class="loop-arrow">&darr;</div>
+              <div class="loop-label">&larr; loop back</div>
+            </div>
+            <div class="loop-arrow">&nbsp;</div>
+            <div class="loop-branch">
+              <div class="loop-step success">&ge; 92%</div>
+              <div class="loop-arrow">&darr;</div>
+              <div class="loop-step terminal">Done!</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-stat-row">
+          <div class="slide-stat-box">
+            <div class="slide-stat-number orange">~10%</div>
+            <div class="slide-stat-desc">Starting coverage (3 tests)</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number green">92%+</div>
+            <div class="slide-stat-desc">Target coverage</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number cyan">4-6</div>
+            <div class="slide-stat-desc">Expected iterations</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: LIVE DEMO 1 -->
+      <div class="slide" v-if="currentSlide===4">
+        <div class="slide-eyebrow">Live Demo</div>
+        <div class="slide-headline">Watch the coverage <em>climb in real time</em></div>
+        <div class="slide-body">
+          <div class="slide-point">Starting: <strong>3 tests</strong>, <strong>~10% line coverage</strong></div>
+          <div class="slide-point">The AI reads the JaCoCo report, identifies uncovered classes and methods</div>
+          <div class="slide-point">Each iteration: new tests appear, coverage jumps</div>
+          <div class="slide-point">Terminates when coverage &ge; <strong>92%</strong></div>
+        </div>
+        <div class="slide-code-block">
+          <pre><span class="comment">// The prompt I'll feed to Claude Code:</span>
+Run <span class="string">`mvn clean test jacoco:report`</span>, then read
+<span class="string">target/site/jacoco/jacoco.csv</span> to determine line coverage %.
+If below <span class="number">92%</span>, analyze the report for uncovered classes,
+write JUnit 5 tests targeting those gaps, and re-run.
+<span class="keyword">Keep looping</span> until line coverage &ge; <span class="number">92%</span>.</pre>
+        </div>
+        <div class="slide-sub">Switching to terminal...</div>
+      </div>
+
+      <!-- SLIDE 6: Performance Loop Concept -->
+      <div class="slide" v-if="currentSlide===5">
+        <div class="slide-eyebrow">Demo 2 &mdash; Performance Optimization</div>
+        <div class="slide-headline">Benchmark. Analyze. Optimize. <em>Commit only what works.</em></div>
+        <div class="slide-diagram">
+          <div class="loop-flow">
+            <div class="loop-step highlight">Run Benchmark</div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-step">Analyze Timing</div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-step">Apply Best Fix</div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-step">Re-Benchmark</div>
+            <div class="loop-arrow">&rarr;</div>
+            <div class="loop-branch">
+              <div class="loop-step success">&ge; 2% faster</div>
+              <div class="loop-arrow">&darr;</div>
+              <div class="loop-step success">Commit + Log</div>
+              <div class="loop-label">reset failures = 0</div>
+              <div class="loop-label">&larr; loop back</div>
+            </div>
+            <div class="loop-arrow">&nbsp;</div>
+            <div class="loop-branch">
+              <div class="loop-step fail">&lt; 2% gain</div>
+              <div class="loop-arrow">&darr;</div>
+              <div class="loop-step fail">failures++</div>
+              <div class="loop-label">if 3 in a row &rarr;</div>
+              <div class="loop-step terminal">Stop</div>
+            </div>
+          </div>
+        </div>
+        <div class="slide-stat-row">
+          <div class="slide-stat-box">
+            <div class="slide-stat-number orange">~6.5s</div>
+            <div class="slide-stat-desc">Starting pipeline time</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number green">7-8x</div>
+            <div class="slide-stat-desc">Expected total speedup</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number cyan">3</div>
+            <div class="slide-stat-desc">Consecutive failures = stop</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 7: LIVE DEMO 2 -->
+      <div class="slide" v-if="currentSlide===6">
+        <div class="slide-eyebrow">Live Demo</div>
+        <div class="slide-headline"><span class="accent-orange">~6.5 seconds</span> to start. Let's see how <em>low it goes.</em></div>
+        <div class="slide-body">
+          <div class="slide-point">Same Java app, <strong>deliberate inefficiencies</strong> planted</div>
+          <div class="slide-point">The AI discovers bubble sort, redundant I/O, regex recompilation...</div>
+          <div class="slide-point">Each successful optimization: <strong>git commit + CHANGELOG entry</strong></div>
+          <div class="slide-point">Watch the <strong>CHANGELOG grow</strong> in real time</div>
+        </div>
+        <div class="slide-code-block">
+          <pre><span class="comment">// The prompt I'll feed to Claude Code:</span>
+Iteratively optimize this Java app for performance.
+Run the benchmark, analyze the timing breakdown,
+pick the <span class="keyword">single most impactful</span> optimization, apply it.
+If <span class="number">&ge; 2%</span> faster: <span class="method">commit</span> + update CHANGELOG.
+If <span class="number">&lt; 2%</span>: count as failure.
+<span class="keyword">3 consecutive failures</span> = stop.</pre>
+        </div>
+        <div class="slide-sub">Switching to terminal...</div>
+      </div>
+
+      <!-- SLIDE 8: Results -->
+      <div class="slide" v-if="currentSlide===7">
+        <div class="slide-eyebrow">Results</div>
+        <div class="slide-headline">The AI found optimizations <em>we planted</em>. Here's what it did.</div>
+        <div class="slide-body">
+          <div class="slide-point">Check <code>git log</code> for auto-generated commit messages</div>
+          <div class="slide-point">Check <code>CHANGELOG.md</code> for documented optimizations</div>
+          <div class="slide-point">Before/after timing comparison from the benchmark output</div>
+        </div>
+        <table class="slide-table">
+          <thead>
+            <tr><th>Optimization</th><th>Category</th><th>Impact</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Bubble sort &rarr; Collections.sort()</td><td class="val-cyan">Algorithm</td><td class="val-green">Very Large</td></tr>
+            <tr><td>File re-reading &rarr; load once</td><td class="val-cyan">I/O</td><td class="val-green">Large</td></tr>
+            <tr><td>Pattern.compile in loop &rarr; static</td><td class="val-cyan">Object creation</td><td>Moderate</td></tr>
+            <tr><td>String += &rarr; StringBuilder</td><td class="val-cyan">String handling</td><td>Moderate</td></tr>
+            <tr><td>DateTimeFormatter per call &rarr; cached</td><td class="val-cyan">Object creation</td><td>Moderate</td></tr>
+            <tr><td>ArrayList scan &rarr; HashMap</td><td class="val-cyan">Data structure</td><td>Moderate</td></tr>
+            <tr><td>Redundant copies &rarr; single pass</td><td class="val-cyan">Memory</td><td>Small</td></tr>
+          </tbody>
+        </table>
+        <div class="slide-sub">Actual results will vary &mdash; the AI may discover them in a different order</div>
+      </div>
+
+      <!-- SLIDE 9: Design Patterns -->
+      <div class="slide" v-if="currentSlide===8">
+        <div class="slide-eyebrow">Engineering Patterns</div>
+        <div class="slide-headline">The <em>anatomy</em> of an effective AI optimization loop</div>
+        <div class="slide-body">
+          <div class="slide-point"><strong>Measurable goal</strong> &mdash; a number the AI can parse (coverage %, elapsed ms)</div>
+          <div class="slide-point"><strong>Tool access</strong> &mdash; the AI runs the same tools you would (<code>mvn</code>, JaCoCo, JFR)</div>
+          <div class="slide-point"><strong>Termination condition</strong> &mdash; prevents infinite loops (threshold met, or N failures)</div>
+          <div class="slide-point"><strong>Checkpoint discipline</strong> &mdash; commit on success, revert on failure</div>
+          <div class="slide-point"><strong>Structured output</strong> &mdash; the AI needs machine-readable results, not just prose</div>
+        </div>
+        <div class="slide-stat-row">
+          <div class="slide-stat-box">
+            <div class="slide-stat-number cyan">1</div>
+            <div class="slide-stat-desc">Prompt to start</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number green">N</div>
+            <div class="slide-stat-desc">Iterations automated</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number purple">0</div>
+            <div class="slide-stat-desc">Manual tool switching</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 10: Where This Breaks -->
+      <div class="slide" v-if="currentSlide===9">
+        <div class="slide-eyebrow">Honest Edges</div>
+        <div class="slide-headline">This is not a <span class="accent-red">silver bullet</span>. Here's where it struggles.</div>
+        <div class="slide-body">
+          <div class="slide-point"><strong>Architectural changes</strong> &mdash; optimizes within the current design, rarely redesigns</div>
+          <div class="slide-point"><strong>Algorithmic leaps</strong> &mdash; finds O(n&sup2;) &rarr; O(n log n), but not novel algorithms</div>
+          <div class="slide-point"><strong>Concurrency subtleties</strong> &mdash; parallel streams work, but thread-safety reasoning is fragile</div>
+          <div class="slide-point"><strong>Diminishing returns</strong> &mdash; the 3-failure rule exists because marginal gains get noisy</div>
+          <div class="slide-point">Best for: <strong>mechanical optimizations</strong> you'd do yourself given enough time</div>
+        </div>
+      </div>
+
+      <!-- SLIDE 11: Beyond Performance -->
+      <div class="slide" v-if="currentSlide===10">
+        <div class="slide-eyebrow">Broader Applications</div>
+        <div class="slide-headline">The loop pattern applies to <em>any measurable quality metric</em></div>
+        <div class="slide-body">
+          <ul class="slide-list">
+            <li><strong>Security scanning</strong> &mdash; run SAST, fix findings, re-scan until clean</li>
+            <li><strong>Code quality</strong> &mdash; run SonarQube, address issues, loop until gate passes</li>
+            <li><strong>API response time</strong> &mdash; load test, optimize hot path, re-test</li>
+            <li><strong>Bundle size</strong> &mdash; measure, tree-shake, re-measure</li>
+            <li><strong>Accessibility</strong> &mdash; run axe, fix violations, re-scan</li>
+          </ul>
+        </div>
+        <div class="slide-code-block">
+          <pre><span class="comment">// The universal pattern:</span>
+<span class="keyword">measurable_goal</span> + <span class="keyword">tool_access</span> + <span class="keyword">termination_condition</span> = <span class="method">AI loop</span></pre>
+        </div>
+      </div>
+
+      <!-- SLIDE 12: Call to Action -->
+      <div class="slide" v-if="currentSlide===11">
+        <div class="slide-eyebrow">Try It Today</div>
+        <div class="slide-headline">One prompt. One loop. <em>Real results.</em></div>
+        <div class="slide-body">
+          <div class="slide-point">Install: <code>npm install -g @anthropic-ai/claude-code</code></div>
+          <div class="slide-point">Point it at your codebase with a <strong>measurable goal</strong></div>
+          <div class="slide-point">Define a <strong>termination condition</strong> in your prompt</div>
+          <div class="slide-point">Let it run &mdash; review the <strong>commits</strong> when it's done</div>
+        </div>
+        <div class="slide-stat-row">
+          <div class="slide-stat-box">
+            <div class="slide-stat-number green">92%+</div>
+            <div class="slide-stat-desc">Coverage achieved</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number green">7-8x</div>
+            <div class="slide-stat-desc">Performance speedup</div>
+          </div>
+          <div class="slide-stat-box">
+            <div class="slide-stat-number cyan">1</div>
+            <div class="slide-stat-desc">Prompt each</div>
+          </div>
+        </div>
+        <div class="slide-sub">The demo prompts are in the project README &mdash; try them on your own code</div>
+      </div>
+
+    </div>
+
+    <div class="slide-nav">
+      <div class="slide-counter">{{ currentSlide + 1 }} / {{ totalSlides }}</div>
+      <div class="slide-progress-track">
+        <div class="slide-progress-fill" :style="{ width: ((currentSlide + 1) / totalSlides * 100) + '%' }"></div>
+      </div>
+      <div class="slide-nav-buttons">
+        <button class="nav-btn" @click="prev" :disabled="currentSlide === 0">&#9664;</button>
+        <button class="nav-btn" @click="next" :disabled="currentSlide === totalSlides - 1">&#9654;</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-text">AI-Assisted Iterative Optimization Loops &mdash; April 2026</div>
+    <a class="footer-link" href="https://claude.ai/code" target="_blank">claude.ai/code</a>
+  </div>
+</div>
+
+<script>
+const { createApp, ref } = Vue;
+
+createApp({
+  setup() {
+    const currentSlide = ref(0);
+    const totalSlides = 12;
+
+    function next() { if (currentSlide.value < totalSlides - 1) currentSlide.value++; }
+    function prev() { if (currentSlide.value > 0) currentSlide.value--; }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); next(); }
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); prev(); }
+      if (e.key === 'Home') { e.preventDefault(); currentSlide.value = 0; }
+      if (e.key === 'End') { e.preventDefault(); currentSlide.value = totalSlides - 1; }
+    });
+
+    return { currentSlide, totalSlides, next, prev };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>
