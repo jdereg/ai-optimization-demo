@@ -8,13 +8,6 @@ import java.util.Map;
 
 public class StatisticsCalculator {
 
-    /**
-     * INEFFICIENCY: All methods accept List<Double> (autoboxing overhead),
-     * create redundant copies, and sort independently. computeAll() calls each
-     * method separately — each one copies and sorts the list again instead of
-     * sorting once and reusing.
-     */
-
     public double mean(List<Double> values) {
         if (values == null || values.isEmpty()) return 0.0;
         List<Double> copy = new ArrayList<>(values);
@@ -63,11 +56,6 @@ public class StatisticsCalculator {
         return copy.get(lower) + fraction * (copy.get(upper) - copy.get(lower));
     }
 
-    /**
-     * Compute all statistics in one call.
-     * INEFFICIENCY: Calls mean(), median(), standardDeviation(), and percentile()
-     * independently — each copies and sorts the list again.
-     */
     public Map<String, Double> computeAll(List<Double> values) {
         Map<String, Double> stats = new HashMap<>();
         stats.put("mean", mean(values));

@@ -9,9 +9,6 @@ import java.util.Map;
 
 public class ReportGenerator {
 
-    /**
-     * Build a SalesReport from region summaries.
-     */
     public SalesReport generate(List<RegionSummary> summaries, long processingTimeMs) {
         SalesReport report = new SalesReport();
         report.setRegionSummaries(summaries);
@@ -30,11 +27,6 @@ public class ReportGenerator {
         return report;
     }
 
-    /**
-     * Format a SalesReport as a human-readable text summary.
-     * INEFFICIENCY: Builds the output string using += in a loop
-     * instead of StringBuilder.
-     */
     public String formatReport(SalesReport report) {
         String output = "";
 

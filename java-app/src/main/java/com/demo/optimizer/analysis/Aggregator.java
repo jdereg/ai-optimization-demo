@@ -7,24 +7,14 @@ import java.util.*;
 
 public class Aggregator {
 
-    /**
-     * Aggregate records by region, producing a RegionSummary for each.
-     * INEFFICIENCY #1: Uses ArrayList + linear search to find/create region buckets
-     * instead of a HashMap. For each record, scans the entire list.
-     * INEFFICIENCY #2: Uses Collections.synchronizedList/synchronizedMap despite
-     * being single-threaded — unnecessary synchronization overhead.
-     */
     public List<RegionSummary> aggregateByRegion(List<SalesRecord> records) {
-        // Unnecessary synchronized wrappers — this is single-threaded code!
         List<RegionSummary> summaries = Collections.synchronizedList(new ArrayList<>());
         Map<String, List<SalesRecord>> regionRecords =
             Collections.synchronizedMap(new HashMap<>());
 
-        // Group records by region using linear search instead of HashMap lookup
         for (SalesRecord record : records) {
             String region = record.getRegion();
 
-            // Linear scan to find existing region bucket — O(n) per record!
             List<SalesRecord> bucket = null;
             for (Map.Entry<String, List<SalesRecord>> entry : regionRecords.entrySet()) {
                 if (entry.getKey().equals(region)) {
@@ -67,15 +57,11 @@ public class Aggregator {
             summaries.add(summary);
         }
 
-        // Sort summaries by total revenue descending (linear scan to find region in list)
         List<RegionSummary> sortedSummaries = new ArrayList<>(summaries);
         sortedSummaries.sort((a, b) -> Double.compare(b.getTotalRevenue(), a.getTotalRevenue()));
         return sortedSummaries;
     }
 
-    /**
-     * Find the most sold product (by quantity) in a list of records.
-     */
     public String findTopProduct(List<SalesRecord> records) {
         Map<String, Integer> productCounts = new HashMap<>();
         for (SalesRecord rec : records) {
@@ -87,9 +73,6 @@ public class Aggregator {
             .orElse("N/A");
     }
 
-    /**
-     * Calculate revenue breakdown by category for a set of records.
-     */
     public Map<String, Double> categoryBreakdown(List<SalesRecord> records) {
         Map<String, Double> breakdown = new HashMap<>();
         for (SalesRecord rec : records) {

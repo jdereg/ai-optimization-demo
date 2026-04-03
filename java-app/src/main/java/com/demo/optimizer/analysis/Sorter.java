@@ -7,11 +7,6 @@ import java.util.List;
 
 public class Sorter {
 
-    /**
-     * Sort records by totalAmount in descending order.
-     * INEFFICIENCY: Uses bubble sort O(n^2) instead of Collections.sort() O(n log n).
-     * With 5,000 records this is dramatically slower.
-     */
     public List<SalesRecord> sortByTotalAmount(List<SalesRecord> records) {
         List<SalesRecord> sorted = new ArrayList<>(records);
         int n = sorted.size();
@@ -29,9 +24,6 @@ public class Sorter {
         return sorted;
     }
 
-    /**
-     * Sort records by date in ascending order.
-     */
     public List<SalesRecord> sortByDate(List<SalesRecord> records) {
         List<SalesRecord> sorted = new ArrayList<>(records);
         int n = sorted.size();
@@ -49,9 +41,6 @@ public class Sorter {
         return sorted;
     }
 
-    /**
-     * Sort records by region (ascending) then by totalAmount (descending) within each region.
-     */
     public List<SalesRecord> sortByRegionThenAmount(List<SalesRecord> records) {
         List<SalesRecord> sorted = new ArrayList<>(records);
         int n = sorted.size();

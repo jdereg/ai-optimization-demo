@@ -29,15 +29,10 @@ public class App {
         app.runPipeline(dataPath);
     }
 
-    /**
-     * Run the full data pipeline with step-by-step timing.
-     * INEFFICIENCY: Loads data per-region (6 file reads) instead of loading once.
-     */
     public SalesReport runPipeline(String dataPath) throws Exception {
         long pipelineStart = System.nanoTime();
         long stepStart;
 
-        // Step 1: Load data — loads file once per region (6 times!)
         stepStart = System.nanoTime();
         DataLoader loader = new DataLoader();
         List<SalesRecord> allRecords = new ArrayList<>();
@@ -47,31 +42,26 @@ public class App {
         }
         long loadTime = (System.nanoTime() - stepStart) / 1_000_000;
 
-        // Step 2: Clean data
         stepStart = System.nanoTime();
         DataCleaner cleaner = new DataCleaner();
         List<SalesRecord> cleanedRecords = cleaner.clean(allRecords);
         long cleanTime = (System.nanoTime() - stepStart) / 1_000_000;
 
-        // Step 3: Enrich data
         stepStart = System.nanoTime();
         DataEnricher enricher = new DataEnricher();
         List<SalesRecord> enrichedRecords = enricher.enrich(cleanedRecords);
         long enrichTime = (System.nanoTime() - stepStart) / 1_000_000;
 
-        // Step 4: Sort by total amount
         stepStart = System.nanoTime();
         Sorter sorter = new Sorter();
         List<SalesRecord> sortedRecords = sorter.sortByTotalAmount(enrichedRecords);
         long sortTime = (System.nanoTime() - stepStart) / 1_000_000;
 
-        // Step 5: Aggregate by region
         stepStart = System.nanoTime();
         Aggregator aggregator = new Aggregator();
         List<RegionSummary> summaries = aggregator.aggregateByRegion(sortedRecords);
         long aggregateTime = (System.nanoTime() - stepStart) / 1_000_000;
 
-        // Step 6: Generate report
         stepStart = System.nanoTime();
         long totalPipelineTime = (System.nanoTime() - pipelineStart) / 1_000_000;
         ReportGenerator reportGen = new ReportGenerator();
@@ -82,7 +72,6 @@ public class App {
         totalPipelineTime = (System.nanoTime() - pipelineStart) / 1_000_000;
         report.setProcessingTimeMs(totalPipelineTime);
 
-        // Print performance benchmark results
         System.out.println("========================================");
         System.out.println("PERFORMANCE BENCHMARK RESULTS");
         System.out.println("========================================");
